@@ -45,7 +45,7 @@ enum Direction {
 }
 
 impl Direction {
-    fn turn(&self, rot: Rotation) -> Direction {
+    fn turn(&self, rot: &Rotation) -> Direction {
         // This is kind of dumb because I implemented all of these as enums
         match (self, rot) {
             (Direction::North, Rotation::L) => Direction::West,
@@ -75,11 +75,11 @@ impl State {
         }
     }
 
-    fn turn(&mut self, rot: Rotation) {
+    fn turn(&mut self, rot: &Rotation) {
         self.direction = self.direction.turn(rot);
     }
 
-    fn walk(&mut self, distance: i32) {
+    fn walk(&mut self, distance: &i32) {
         match self.direction {
             Direction::North => self.y += distance,
             Direction::South => self.y -= distance,
@@ -88,9 +88,9 @@ impl State {
         }
     }
 
-    fn execute_instruction(&mut self, instruction: Instruction) {
-        self.turn(instruction.rotation);
-        self.walk(instruction.distance);
+    fn execute_instruction(&mut self, instruction: &Instruction) {
+        self.turn(&instruction.rotation);
+        self.walk(&instruction.distance);
     }
 
     fn distance_from_origin(&self) -> i32 {
@@ -99,13 +99,32 @@ impl State {
 }
 
 
-fn actually_really_run(instructions: Vec<Instruction>) {
+fn part1(instructions: &Vec<Instruction>) {
     let mut state = State::new();
     for instruction in instructions {
         state.execute_instruction(instruction);
     }
 
     println!("We need to walk {} steps", state.distance_from_origin());
+}
+
+fn part2(instructions: &Vec<Instruction>) {
+    use std::collections::HashSet;
+    let mut seen: HashSet<(i32, i32)> = HashSet::new();
+    let mut state = State::new();
+    for instruction in instructions {
+        state.turn(&instruction.rotation);
+        for _ in 0..instruction.distance {
+            seen.insert((state.x, state.y));
+            state.walk(&1);
+            if seen.contains(&(state.x, state.y)) {
+                println!("We need to walk {} steps", state.distance_from_origin());
+                return;
+            }
+        }
+
+    }
+
 }
 
 fn run_with_input(content: String) {
@@ -116,7 +135,10 @@ fn run_with_input(content: String) {
 
     match instructions {
         Err(err) => println!("Unable to parse instructions: {}", err),
-        Ok(instructions) => actually_really_run(instructions),
+        Ok(instructions) => {
+            part1(&instructions);
+            part2(&instructions);
+        }
     }
 }
 
